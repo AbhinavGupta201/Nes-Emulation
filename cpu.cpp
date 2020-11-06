@@ -1,6 +1,7 @@
                                               /*  ---addressing modes--- */
+
 // Address Mode: Absolute
-// A full 16-bit address is loaded and used
+// load full 16 bit address
 uint8_t olc6502::ABS()
 {
          uint16_t lo=read(pc);
@@ -12,9 +13,7 @@ uint8_t olc6502::ABS()
 }
 
 // Address Mode: Absolute with X Offset
-// Fundamentally the same as absolute addressing, but the contents of the X Register
-// is added to the supplied two byte address. If the resulting address changes
-// the page, an additional clock cycle is required
+// content of x is added to the absolute address .if the page boundary is crossed then add a clock cycle
 uint8_t olc6502::ABX()
 {
       uint16_t lo=read(pc);
@@ -23,15 +22,13 @@ uint8_t olc6502::ABX()
       pc++;
       addr_abs=(hi<<8)|lo;
       addr_abs+=x;
-      if((addr_abs)&0xFF00 !=(hi<<8))
+      if((addr_abs&0xFF00) !=(hi<<8))
          return 1;
     return 0;
 }
 
 // Address Mode: Absolute with Y Offset
-// Fundamentally the same as absolute addressing, but the contents of the Y Register
-// is added to the supplied two byte address. If the resulting address changes
-// the page, an additional clock cycle is required
+// same as the ABX except the y register
 uint8_t olc6502::ABY()
 {
     uint16_t lo=read(pc);
@@ -40,7 +37,7 @@ uint8_t olc6502::ABY()
     pc++;
     addr_abs=(hi<<8)|lo;
       addr_abs+=y;
-    if(addr_abs)&0xFF00 !=(hi<<8))
+    if(addr_abs&0xFF00 !=(hi<<8))
      return 1;
      return 0;
 }
@@ -101,13 +98,6 @@ uint8_t olc6502::IZY()
 }
 
 
-//except imp mode data is read from the location absolute address
-uint8_t olc6502::fetch()
-{
-	if (!(lookup[opcode].addrmode == &olc6502::IMP))
-		fetched = read(addr_abs);
-	return fetched;
-}
 
                                                         /* ------Instructions------*/
 
@@ -137,10 +127,10 @@ uint8_t olc6502::JMP()
 uint8_t olc6502::JSR()
 {
     pc--;
-    write( 0x0100 + stkp ,(pc>>8)& 0x00FF ) );
+    write( 0x0100 + stkp ,(pc>>8)& 0x00FF ) ;
     stkp--;
     write( 0x0100 + stkp ,pc&0x00FF);
-    stkp--
+    stkp--;
 
     pc=addr_abs;
     return 0;
@@ -149,7 +139,7 @@ uint8_t olc6502::JSR()
 // Instruction: Load The Accumulator
 // Function:    A = M
 // Flags Out:   N, Z
-uint16_t olc6502::LDA( )
+uint8_t olc6502::LDA( )
 {
     fetch( ) ;
 
@@ -178,21 +168,21 @@ uint8_t olc6502 :: LDY( )
 {
     fetch( );
     y=fetched ;
-    SetFlage (N , y&0x80);
-    SetFlage( Z, y==0x00);
+    SetFlag(N , y&0x80);
+    SetFlag(Z, y==0x00);
     return 0;
 }
 
+// instruction: logical shift right
 // LSR shifts all bits right one position. 0 is shifted into bit 7 and the original bit 0 is shifted into the Carry.
 // flages out : Z,N ,C
-// instruction: logical shift right
 uint8_t olc6502::LSR()
 {
     fetch( );
-    SetFlage( C , fetched & 0x0001) ;
+    SetFlag( C , fetched & 0x0001) ;
     temp=fetched>>1;
-    SetFlage( Z, ( temp&&0x00FF)==0x0000) ;
-    SetFlage( N , temp&0x0080);
+    SetFlag( Z, ( temp&&0x00FF)==0x0000) ;
+    SetFlag( N , temp&0x0080);
     if (lookup[opcode].addrmode == &olc6502::IMP)
 		a = temp & 0x00FF;
     else
@@ -218,10 +208,11 @@ uint8_t olc6502::NOP()
     return 0;
 
 }
+
 // Instruction: Bitwise Logic OR
 // Function:    A = A | M
 // Flags Out:   N, Z
-uint8_t olc6502::ORA( )
+uint8_t olc6502::ORA()
 {
     fetch( );
     a=a|fetched ;
@@ -254,7 +245,7 @@ uint8_t olc6502::PHP()
 // Instruction: Pop Accumulator off Stack
 // Function:    A <- stack
 // Flags Out:   N, Z
-uint16_t olc6502::PLA()
+uint8_t olc6502::PLA()
 {
     stkp++;
     a=read(0x0100+stkp);
@@ -298,7 +289,7 @@ uint8_t olc6502::ROL()
 uint8_t olc6502::ROR()
 {
     fetch();
-    temp=(uint16_t)(fetched>>1)| (GetFlage(C)<<7);
+    temp=(uint16_t)(fetched>>1)| (GetFlag(C)<<7);
     SetFlag(C ,temp&0xFF00);
     SetFlag(Z , temp&0x00FF ==0x0000);
     SetFlag(N ,temp&0x0080);
@@ -405,7 +396,7 @@ uint8_t olc6502::TAY()
 {
     y=a;
     SetFlag(N ,a&0x80);
-    SetFlag(Z , a=0x00);
+    SetFlag(Z , a==0x00);
     return 0;
 }
 
@@ -456,4 +447,3 @@ uint8_t olc6502 :: XXX()
 {
     return 0;
 }
-
