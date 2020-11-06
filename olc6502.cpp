@@ -192,7 +192,7 @@ uint8_t olc6502::LSR()
 
 }
 
-//NOP is a mnemonic that stands for ìNo Operationî. This instruction does nothing during execution
+//NOP is a mnemonic that stands for ‚ÄúNo Operation‚Äù. This instruction does nothing during execution
 uint8_t olc6502::NOP()
 {
     switch(opcode)
@@ -265,7 +265,7 @@ uint8_t olc6502::PLP()
     return 0;
 }
 
-/* remiaing rol and other three from the rol */
+
 //The rotate left (ROL) and rotate through carry left (RCL) instructions shift all the bits toward more-significant bit positions,
 //except for the most-significant bit, which is rotated to the least significant bit location
 // set flage : N,Z,C;
